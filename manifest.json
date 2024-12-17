@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Bad LLM Detector Extension",
+  "version": "1.0",
+  "description": "Bad LLM Detector - highlights words that LLM loves to use",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ]
+}
