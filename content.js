@@ -47,7 +47,7 @@ function run(){
             const mutation = mutations[i];
             for (let j = 0; j < mutation.addedNodes.length; j++) {
                 const node = mutation.addedNodes[j];
-                if (node.nodeType === Node.TEXT_NODE && node.parentElement.className !== wrapperClassName) {
+                if (node.nodeType === Node.TEXT_NODE && node.parentElement && node.parentElement.className !== wrapperClassName) {
                     if (!timeout) {
                         timeout = setTimeout(() => {
                             replacer(document.body);
