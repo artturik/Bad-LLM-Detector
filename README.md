@@ -44,10 +44,9 @@ Choose how detected words are displayed on web pages:
 
 #### Replace Mode
 - Detected words are replaced with custom text
-- Default replacement: `!AI SLOP!`
+- Default replacement: `Maybe AI: $0`
 - Supports `$0` placeholder to include the original word
   - Example: `[$0]` would replace "delve" with "[delve]"
-  - Example: `!AI SLOP!` would replace all words with "!AI SLOP!"
 
 ### Adding External Word Lists
 1. Go to the Options page
