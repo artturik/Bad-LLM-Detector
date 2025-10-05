@@ -13,30 +13,110 @@ chrome.storage.local.get({ paused: false }, (data) => {
 
 function run(){
     chrome.storage.local.set({ paused: false });
-    chrome.storage.sync.get("wordList", ({ wordList }) => {
+    chrome.storage.sync.get(["wordList", "highlightStyle", "replacerTimeout", "detectionMode", "replacementText"], ({ wordList, highlightStyle, replacerTimeout, detectionMode, replacementText }) => {
+
+    // Default style if not set
+    const style = highlightStyle || {
+        color: '#ff0000',
+        backgroundColor: 'transparent',
+        fontWeight: 'normal',
+        textDecoration: 'none',
+        border: 'none',
+        borderRadius: '0px'
+    };
+    
+    // Default timeout if not set (1000ms = 1 second)
+    const timeout_delay = replacerTimeout || 1000;
+    
+    // Default detection mode (highlight or replace)
+    const mode = detectionMode || 'highlight';
+    
+    // Default replacement text (supports $0 for matched word)
+    const replacement = replacementText || '!AI SLOP!';
 
     var wordCount = 0;
-    const regex = new RegExp(`(${wordList.join("|")})`, "gi");
+    var detectedWords = {}; // Track word frequencies
+    
+    // Support both single words and phrases
+    const escapedWords = wordList.map(word => {
+        // Escape special regex characters
+        return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    });
+    
+    // Build regex pattern that handles both words and punctuation
+    const patterns = escapedWords.map(word => {
+        // Check if the word contains only non-alphanumeric characters (like "—")
+        if (/^[^a-zA-Z0-9]+$/.test(word)) {
+            // For punctuation-only patterns, match them directly without word boundaries
+            return word;
+        } else {
+            // For words/phrases, use word boundaries
+            return `\\b${word}\\b`;
+        }
+    });
+    
+    const regex = new RegExp(`(${patterns.join("|")})`, "gi");
     const wrapperClassName = "bad-llm-detector";
+    
     const replacer = (element) => {
         findAndReplaceDOMText(element, {
             find: regex,
+            preset: 'prose',
             replace: (match) => {
                 if(match.node.parentElement.className === wrapperClassName){
                     // don't replace if already replaced
                     return match.text;
                 }
                 wordCount++;
-                const span = document.createElement("span");
-                span.className = wrapperClassName;
-                span.style.color = 'red';
-                span.textContent = match.text;
-                return span;
+                
+                // Track detected word
+                const word = match.text.toLowerCase();
+                detectedWords[word] = (detectedWords[word] || 0) + 1;
+                
+                if (mode === 'replace') {
+                    // Replace mode - replace the matched text
+                    const replacedText = replacement.replace(/\$0/g, match.text);
+                    const span = document.createElement("span");
+                    span.className = wrapperClassName;
+                    span.textContent = replacedText;
+                    return span;
+                } else {
+                    // Highlight mode - apply custom styling
+                    const span = document.createElement("span");
+                    span.className = wrapperClassName;
+                    
+                    // Apply custom styles
+                    span.style.color = style.color;
+                    span.style.backgroundColor = style.backgroundColor;
+                    span.style.fontWeight = style.fontWeight;
+                    span.style.textDecoration = style.textDecoration;
+                    if (style.border && style.border !== 'none') {
+                        span.style.border = style.border;
+                    }
+                    if (style.borderRadius && style.borderRadius !== '0px') {
+                        span.style.borderRadius = style.borderRadius;
+                        span.style.padding = '2px 4px';
+                    }
+                    
+                    span.textContent = match.text;
+                    return span;
+                }
             }
         });
     }
 
+    // Function to update badge and statistics
+    const updateBadgeAndStats = () => {
+        chrome.runtime.sendMessage({ 
+            type: "updateBadge", 
+            count: wordCount,
+            detectedWords: detectedWords
+        });
+        updateStatistics(detectedWords);
+    };
+
     replacer(document.body);
+    updateBadgeAndStats();
 
     var timeout = null;
     const observer = new MutationObserver(function(mutations) {
@@ -51,8 +131,9 @@ function run(){
                     if (!timeout) {
                         timeout = setTimeout(() => {
                             replacer(document.body);
+                            updateBadgeAndStats(); // Update badge after detecting new content
                             timeout = null;
-                        }, 1000);
+                        }, timeout_delay);
                         return;
                     }
                 }
@@ -64,9 +145,56 @@ function run(){
         childList: true,
         subtree: true
     });
-    chrome.runtime.sendMessage({ type: "updateBadge", count: wordCount });
 });
 }
+
+// Update word statistics
+function updateStatistics(detectedWords) {
+    chrome.storage.local.get(['wordStats'], (result) => {
+        const stats = result.wordStats || {};
+        
+        for (const [word, count] of Object.entries(detectedWords)) {
+            stats[word] = (stats[word] || 0) + count;
+        }
+        
+        chrome.storage.local.set({ wordStats: stats });
+    });
+}
+
+// Listen for messages from popup requesting detected words
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "getDetectedWords") {
+        chrome.storage.sync.get(["wordList", "highlightStyle", "replacerTimeout"], ({ wordList, highlightStyle, replacerTimeout }) => {
+            // Recount current page words
+            var currentDetected = {};
+            const escapedWords = wordList.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            
+            // Build regex pattern that handles both words and punctuation
+            const patterns = escapedWords.map(word => {
+                // Check if the word contains only non-alphanumeric characters (like "—")
+                if (/^[^a-zA-Z0-9]+$/.test(word)) {
+                    // For punctuation-only patterns, match them directly without word boundaries
+                    return word;
+                } else {
+                    // For words/phrases, use word boundaries
+                    return `\\b${word}\\b`;
+                }
+            });
+            
+            const regex = new RegExp(`(${patterns.join("|")})`, "gi");
+            
+            const text = document.body.innerText;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                const word = match[0].toLowerCase();
+                currentDetected[word] = (currentDetected[word] || 0) + 1;
+            }
+            
+            sendResponse({ detectedWords: currentDetected });
+        });
+        return true;
+    }
+});
 
 /**
  * findAndReplaceDOMText v 0.4.6

@@ -9,10 +9,147 @@
 <body>
 <div class="container">
     <h1>Bad LLM detector</h1>
-    <h2>Manage Word List</h2>
+
+    <h2>Custom Words</h2>
+    <p class="muted-text" style="font-size: 0.9em;">Add your own custom words to the list.</p>
     <ul id="wordList"></ul>
     <input type="text" id="newWord" placeholder="Enter word" />
     <button id="addWord">Add Word</button>
+    
+    <div style="margin-top: 20px;">
+        <p class="muted-text" style="font-size: 0.9em;">Total words in use: <strong id="totalWords">0</strong></p>
+    </div>
+    
+    <h2>External Word Lists</h2>
+    <p class="muted-text" style="font-size: 0.9em;">Add URLs to .txt files with one word per line. Lists are updated on browser startup.</p>
+    <div id="externalLists"></div>
+    <div style="margin-top: 10px;">
+        <input type="text" id="newListUrl" placeholder="Enter list URL (e.g., https://example.com/words.txt)" style="width: 400px;" />
+        <input type="text" id="newListName" placeholder="List name" style="width: 150px;" />
+        <button id="addList">Add List</button>
+        <button id="updateLists">Update All Lists Now</button>
+    </div>
+    <div id="updateStatus" style="margin-top: 10px; font-style: italic;"></div>
+    
+    <h2>Highlight Style</h2>
+    <p class="muted-text" style="font-size: 0.9em;">Customize how detected words are highlighted on pages.</p>
+    
+    <div class="preset-buttons" style="margin-bottom: 20px;">
+        <button class="preset-style" data-preset="red-text">Red Text</button>
+        <button class="preset-style" data-preset="highlight">Highlight</button>
+        <button class="preset-style" data-preset="orange-box">Orange Box</button>
+    </div>
+    
+    <div class="custom-style-box">
+        <h3>Custom Style</h3>
+        <div class="style-grid">
+            <label>Text Color:</label>
+            <input type="color" id="textColor" value="#ff0000" />
+            
+            <label>Background Color:</label>
+            <input type="color" id="backgroundColor" value="#ffffff" />
+            
+            <label>Font Weight:</label>
+            <select id="fontWeight">
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="600">Semi-Bold</option>
+            </select>
+            
+            <label>Text Decoration:</label>
+            <select id="textDecoration">
+                <option value="none">None</option>
+                <option value="underline">Underline</option>
+                <option value="overline">Overline</option>
+                <option value="line-through">Strike-through</option>
+            </select>
+            
+            <label>Border:</label>
+            <input type="text" id="border" placeholder="e.g., 1px solid #ff0000" />
+            
+            <label>Border Radius:</label>
+            <input type="text" id="borderRadius" placeholder="e.g., 3px" />
+        </div>
+        
+        <div class="preview-section">
+            <label><strong>Preview:</strong></label>
+            <div class="style-preview-container">
+                This is some text with a <span id="stylePreview">highlighted word</span> in it.
+            </div>
+        </div>
+        
+        <div class="style-buttons">
+            <button id="saveStyle">Save Style</button>
+            <button id="resetStyle">Reset to Default</button>
+        </div>
+    </div>
+    
+    <h2>Other Settings</h2>
+    
+    <div class="custom-style-box">
+        <h3>Detection Mode</h3>
+        <p class="muted-text" style="font-size: 0.9em; margin-bottom: 15px;">Choose how detected words are displayed.</p>
+        
+        <div class="style-grid">
+            <label>Mode:</label>
+            <select id="detectionMode">
+                <option value="highlight">Highlight</option>
+                <option value="replace">Replace</option>
+            </select>
+            
+            <label>Replacement Text:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="replacementText" placeholder="SLOP" style="flex: 1;" />
+                <span class="muted-text" style="font-size: 0.85em;">Use $0 for original word</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="custom-style-box">
+        <h3>Badge Colors</h3>
+        <p class="muted-text" style="font-size: 0.9em; margin-bottom: 15px;">Customize badge colors based on the number of detected words.</p>
+        
+        <div class="style-grid">
+            <label>High Alert (></label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="highThreshold" value="10" min="1" style="width: 80px;" />
+                <span class="muted-text">detections):</span>
+                <input type="color" id="highColor" value="#ef4444" />
+            </div>
+            
+            <label>Medium Alert (></label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="mediumThreshold" value="5" min="1" style="width: 80px;" />
+                <span class="muted-text">detections):</span>
+                <input type="color" id="mediumColor" value="#f97316" />
+            </div>
+            
+            <label>Low Alert (> 0 detections):</label>
+            <input type="color" id="lowColor" value="#6b7280" />
+            
+            <label>No Detections:</label>
+            <input type="color" id="noneColor" value="#10b981" />
+        </div>
+    </div>
+    
+    <div class="custom-style-box">
+        <h3>New Content Detection</h3>
+        <p class="muted-text" style="font-size: 0.9em; margin-bottom: 15px;">Configure how the extension scans for new content on dynamic pages.</p>
+        
+        <div class="style-grid">
+            <label>Scan Delay:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="replacerTimeout" value="1000" min="100" max="5000" style="width: 100px;" />
+                <span class="muted-text">ms (100-5000ms, lower is faster but uses more resources)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="style-buttons">
+        <button id="saveSettings">Save Settings</button>
+        <button id="resetSettings">Reset to Defaults</button>
+    </div>
+    
     <a href="popup.html">Back</a>
 </div>
 <script src="options.js"></script>

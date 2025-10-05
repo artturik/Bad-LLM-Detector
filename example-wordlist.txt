@@ -1,0 +1,20 @@
+# Example Word List for Bad LLM Detector
+# Lines starting with # are comments and will be ignored
+# One word or phrase per line
+# Empty lines are also ignored
+
+Delve
+Leverage
+Paradigm shift
+Synergy
+Holistic approach
+Revolutionary
+Game-changer
+Deep dive
+Cutting-edge
+State-of-the-art
+
+# You can add inline comments too
+Innovative  # This is a common LLM word
+Groundbreaking
+Transformative

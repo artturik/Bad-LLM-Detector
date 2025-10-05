@@ -14,7 +14,24 @@
     <button id="toggle-pause-btn">Loading...</button>
     <button id="disable-hostname-btn">Disable on This Site</button>
 
-    <a href="options.html">Manage Word List</a>
+    <div id="detected-words-section" class="detected-words-section">
+        <h2>Detected Words on This Page</h2>
+        <div id="detected-words-list" class="detected-words-list">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+    
+    <div id="statistics-section" class="statistics-section">
+        <div class="section-header">
+            <h2>All-Time Statistics</h2>
+            <button id="reset-stats-btn" class="btn-icon" title="Reset Statistics">🗑️</button>
+        </div>
+        <div id="statistics-list" class="statistics-list">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+    
+    <a href="options.html">Settings</a>
 </div>
 <script src="popup.js"></script>
 </body>
